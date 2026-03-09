@@ -61,6 +61,13 @@ export interface BeetleLensConfig {
    * Default: <cwd>/.beetle-lens
    */
   outputDir?: string;
+
+  /**
+   * Kafka broker addresses — when set, SDK publishes events directly to Kafka.
+   * Format: 'host:port' or 'host1:port,host2:port'
+   * Example: '3.111.217.78:9092'
+   */
+  kafkaBrokers?: string;
 }
 
 export interface ResolvedConfig extends Required<BeetleLensConfig> {}
@@ -78,5 +85,6 @@ export function resolveConfig(userConfig: BeetleLensConfig): ResolvedConfig {
     debug: userConfig.debug ?? false,
     disabled: userConfig.disabled ?? false,
     outputDir: userConfig.outputDir ?? '',
+    kafkaBrokers: userConfig.kafkaBrokers ?? '',
   };
 }

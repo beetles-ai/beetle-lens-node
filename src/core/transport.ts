@@ -1,24 +1,56 @@
 import type { EventBatch } from '../types';
 import type { ResolvedConfig } from '../config';
+import { connectKafkaProducer, publishBatch, disconnectKafkaProducer } from '../lib/kafka';
 
 const AGENT_VERSION = '0.1.0';
 const MAX_RETRIES = 3;
 const RETRY_DELAYS_MS = [200, 400, 800];
 
+let kafkaConnected = false;
+
 /**
- * Send a batch of events to the Beetle Ingest API.
- * The Ingest API then writes to Kafka — the SDK never touches Kafka directly.
+ * Send a batch of events.
  *
- * Retries up to 3 times with exponential backoff.
- * On final failure: warns and drops (never silently drops without warning).
+ * Priority:
+ *   1. kafkaBrokers set → publish directly to Kafka
+ *   2. apiKey set       → HTTP POST to ingest API
+ *   3. debug/fallback   → save to local file
  */
 export async function sendBatch(batch: EventBatch, config: ResolvedConfig): Promise<void> {
-  // Debug mode — save to local file instead of sending
+  if (config.disabled) return;
+
+  // ── Kafka mode ───────────────────────────────────────────────────────
+  if (config.kafkaBrokers) {
+    if (!kafkaConnected) {
+      const brokers = config.kafkaBrokers.split(',').map(b => b.trim());
+      await connectKafkaProducer(brokers);
+      kafkaConnected = true;
+
+      // Disconnect on process exit
+      process.once('SIGTERM', disconnectKafkaProducer);
+      process.once('SIGINT', disconnectKafkaProducer);
+      process.once('beforeExit', disconnectKafkaProducer);
+    }
+
+    try {
+      await publishBatch(batch);
+      if (config.debug) {
+        console.log(`[Beetle Lens] Kafka: published ${batch.events.length} events`);
+      }
+      return;
+    } catch (err) {
+      console.warn('[Beetle Lens] Kafka publish failed:', (err as Error).message);
+      return;
+    }
+  }
+
+  // ── Debug / no API key — save to file ────────────────────────────────
   if (config.debug || !config.apiKey) {
     await saveToFile(batch, config);
     return;
   }
 
+  // ── HTTP ingest API mode ─────────────────────────────────────────────
   const url = `${config.endpoint}/api/lens/ingest`;
   const body = JSON.stringify({ ...batch, agentVersion: AGENT_VERSION });
 
@@ -39,23 +71,16 @@ export async function sendBatch(batch: EventBatch, config: ResolvedConfig): Prom
       });
 
       clearTimeout(timeout);
-
       if (response.ok) return;
 
-      // 4xx errors — don't retry (bad request, invalid api key, etc.)
       if (response.status >= 400 && response.status < 500) {
-        console.warn(`[Beetle Lens] Ingest API rejected batch: ${response.status} ${response.statusText}`);
+        console.warn(`[Beetle Lens] Ingest API rejected: ${response.status}`);
         return;
       }
-
-      // 5xx — retryable
       throw new Error(`HTTP ${response.status}`);
     } catch (err) {
       if (attempt === MAX_RETRIES) {
-        console.warn(
-          `[Beetle Lens] Failed to send batch after ${MAX_RETRIES} retries. Events dropped.`,
-          err instanceof Error ? err.message : err
-        );
+        console.warn('[Beetle Lens] Failed after retries. Events dropped.', (err as Error).message);
         return;
       }
       await sleep(RETRY_DELAYS_MS[attempt]!);
@@ -63,9 +88,6 @@ export async function sendBatch(batch: EventBatch, config: ResolvedConfig): Prom
   }
 }
 
-/**
- * Save batch to .beetle-lens/ folder (debug mode only)
- */
 async function saveToFile(batch: EventBatch, config: ResolvedConfig): Promise<void> {
   const fs = await import('fs');
   const path = await import('path');

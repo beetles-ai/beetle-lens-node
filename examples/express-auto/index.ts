@@ -14,7 +14,8 @@ app.use(express.json());
 initLens(app, {
   serviceName: 'example-express-app',
   mode: 'auto',
-  debug: true,
+  kafkaBrokers: process.env.KAFKA_BROKERS || 'localhost:9092',
+  debug: true, // also log to console when publishing
   outputDir: path.join(__dirname, '../../profiler-output'),
 });
 
