@@ -40,8 +40,9 @@ export interface ProfilingEvent {
   timestampNs: string;            // Unix epoch nanoseconds (wall clock)
   durationNs?: string;
   functionName?: string;
-  filePath?: string;
-  lineNumber?: number;
+  filePath?: string;        // absolute path of the file where the traced function is defined
+  lineNumber?: number;      // line in that file (withTrace call site or @Trace annotation line)
+  callerFunctionName?: string; // JS function that contains the withTrace() call
   metadata?: Record<string, string>;
   error?: ErrorInfo;
   http?: HttpInfo;

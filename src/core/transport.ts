@@ -21,27 +21,32 @@ export async function sendBatch(batch: EventBatch, config: ResolvedConfig): Prom
 
   // ── Kafka mode ───────────────────────────────────────────────────────
   if (config.kafkaBrokers) {
-    if (!kafkaConnected) {
-      const brokers = config.kafkaBrokers.split(',').map(b => b.trim());
-      await connectKafkaProducer(brokers);
-      kafkaConnected = true;
-
-      // Disconnect on process exit
-      process.once('SIGTERM', disconnectKafkaProducer);
-      process.once('SIGINT', disconnectKafkaProducer);
-      process.once('beforeExit', disconnectKafkaProducer);
-    }
-
     try {
+      if (!kafkaConnected) {
+        const brokers = config.kafkaBrokers.split(',').map(b => b.trim());
+        console.log(`[Beetle Lens] Kafka: connecting to ${config.kafkaBrokers}...`);
+        await connectKafkaProducer(brokers);
+        kafkaConnected = true;
+        console.log('[Beetle Lens] Kafka: connected ✅');
+
+        process.once('SIGTERM', disconnectKafkaProducer);
+        process.once('SIGINT', disconnectKafkaProducer);
+        process.once('beforeExit', disconnectKafkaProducer);
+      }
+
       await publishBatch(batch);
       if (config.debug) {
         console.log(`[Beetle Lens] Kafka: published ${batch.events.length} events`);
       }
-      return;
     } catch (err) {
-      console.warn('[Beetle Lens] Kafka publish failed:', (err as Error).message);
-      return;
+      kafkaConnected = false; // reset so next flush retries the connection
+      console.warn('[Beetle Lens] Kafka error:', (err as Error).message);
+      if (config.debug) {
+        console.warn('[Beetle Lens] Falling back to local file for this batch');
+        await saveToFile(batch, config);
+      }
     }
+    return;
   }
 
   // ── Debug / no API key — save to file ────────────────────────────────

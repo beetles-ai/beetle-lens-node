@@ -17,7 +17,7 @@ function getKafkaClient(brokers: string[]): Kafka {
     kafka = new Kafka({
       clientId: 'beetle-lens-sdk',
       brokers,
-      logLevel: logLevel.NOTHING, // suppress broker protocol noise KafkaJS auto-retries
+      logLevel: logLevel.ERROR, // show errors, suppress info/debug noise
       retry: { initialRetryTime: 100, retries: 3 },
     });
   }

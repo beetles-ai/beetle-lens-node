@@ -1,5 +1,6 @@
 import { withTrace } from './tracer';
 import { lens } from './lens';
+import { getCallerInfo } from './core/utils';
 
 export interface TraceOptions {
   /**
@@ -26,6 +27,12 @@ export interface TraceOptions {
  * }
  */
 export function Trace(options?: TraceOptions) {
+  // Capture the definition site once when the decorator is applied to the class.
+  // Frame layout:  Error → getCallerInfo → Trace (factory) → class definition file (frame 3).
+  // This gives us the file/line of the @Trace() annotation, which sits directly
+  // above the method signature — close enough for CodeLens placement.
+  const locationHint = getCallerInfo(3);
+
   return function (
     _target: object,
     propertyKey: string,
@@ -42,7 +49,7 @@ export function Trace(options?: TraceOptions) {
         return originalMethod.apply(this, args);
       }
 
-      return withTrace(traceName, () => originalMethod.apply(this, args));
+      return withTrace(traceName, () => originalMethod.apply(this, args), locationHint);
     };
 
     return descriptor;

@@ -73,8 +73,13 @@ export interface BeetleLensConfig {
 export interface ResolvedConfig extends Required<BeetleLensConfig> {}
 
 export function resolveConfig(userConfig: BeetleLensConfig): ResolvedConfig {
+  const apiKey = userConfig.apiKey ?? '';
+  if (apiKey && !apiKey.startsWith('blt_svc_')) {
+    console.warn('[Beetle Lens] ⚠️  apiKey should start with blt_svc_ — get a valid key from your Beetle dashboard');
+  }
+
   return {
-    apiKey: userConfig.apiKey ?? '',
+    apiKey,
     serviceName: userConfig.serviceName ?? getServiceName(),
     environment: userConfig.environment ?? getEnvironment(),
     mode: userConfig.mode ?? 'auto',
