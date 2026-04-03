@@ -24,8 +24,8 @@ export async function withTrace<T>(
 
   // Capture the call-site synchronously before any async hops.
   // Frame layout:  Error → getCallerInfo → withTrace → user code (frame 3).
-  // When called from @Trace() the decorator pre-captures and passes _locationHint,
-  // so we skip auto-detection to avoid pointing at decorators.ts internals.
+  // When called from @Trace() or the loader hook, _locationHint is pre-captured
+  // so we skip stack inspection entirely (faster + more accurate).
   const location: CallerInfo = _locationHint ?? getCallerInfo(3);
 
   const ctx = createChildContext();

@@ -49,22 +49,6 @@ export function createMiddleware() {
     const timerStart = startTimer();
     let responseSent = false;
 
-    // Emit HTTP_REQUEST event
-    collector.add({
-      traceId: ctx.traceId,
-      spanId: ctx.spanId,
-      type: EventType.HTTP_REQUEST,
-      timestampNs,
-      http: {
-        method: req.method,
-        path: req.path || req.url,
-        headers: sanitizeHeaders(req.headers as Record<string, string>),
-        requestSizeBytes: req.headers['content-length']
-          ? parseInt(req.headers['content-length'])
-          : 0,
-      },
-    });
-
     const emitResponse = () => {
       if (responseSent) return;
       responseSent = true;
@@ -74,6 +58,26 @@ export function createMiddleware() {
         (req.route?.path as string | undefined) ??
         (req as Request & { baseUrl?: string }).baseUrl ??
         undefined;
+
+      // Ignore unmatched 404s (unknown paths), so metrics only track real app routes.
+      const isUnmatched404 = !route && res.statusCode === 404;
+      if (isUnmatched404) return;
+
+      // Emit HTTP_REQUEST only when route is eligible for tracking.
+      collector.add({
+        traceId: ctx.traceId,
+        spanId: ctx.spanId,
+        type: EventType.HTTP_REQUEST,
+        timestampNs,
+        http: {
+          method: req.method,
+          path: req.path || req.url,
+          headers: sanitizeHeaders(req.headers as Record<string, string>),
+          requestSizeBytes: req.headers['content-length']
+            ? parseInt(req.headers['content-length'])
+            : 0,
+        },
+      });
 
       // Try to read content-length for response size
       const rawLen = res.getHeader('content-length');

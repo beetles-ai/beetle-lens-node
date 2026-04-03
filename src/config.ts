@@ -73,7 +73,7 @@ export interface BeetleLensConfig {
 export interface ResolvedConfig extends Required<BeetleLensConfig> {}
 
 export function resolveConfig(userConfig: BeetleLensConfig): ResolvedConfig {
-  const apiKey = userConfig.apiKey ?? '';
+  const apiKey = userConfig.apiKey ?? process.env.BEETLE_API_KEY ?? '';
   if (apiKey && !apiKey.startsWith('blt_svc_')) {
     console.warn('[Beetle Lens] ⚠️  apiKey should start with blt_svc_ — get a valid key from your Beetle dashboard');
   }
@@ -86,10 +86,10 @@ export function resolveConfig(userConfig: BeetleLensConfig): ResolvedConfig {
     sampleRate: userConfig.sampleRate ?? 1.0,
     batchSize: userConfig.batchSize ?? 100,
     flushIntervalMs: userConfig.flushIntervalMs ?? 1000,
-    endpoint: userConfig.endpoint ?? 'https://api.beetleai.dev',
+    endpoint: userConfig.endpoint ?? process.env.BEETLE_ENDPOINT ?? 'https://api.beetleai.dev',
     debug: userConfig.debug ?? false,
     disabled: userConfig.disabled ?? false,
     outputDir: userConfig.outputDir ?? '',
-    kafkaBrokers: userConfig.kafkaBrokers ?? '',
+    kafkaBrokers: userConfig.kafkaBrokers ?? process.env.KAFKA_BROKERS ?? '',
   };
 }

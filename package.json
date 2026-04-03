@@ -1,20 +1,72 @@
 {
-  "name": "@beetle/lens",
+  "name": "@beetleai_dev/beetle-node",
   "version": "0.1.0",
   "description": "Beetle Lens - Real-time Node.js profiler SDK",
   "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./express": {
+      "types": "./dist/integrations/express.d.ts",
+      "import": "./dist/integrations/express.mjs",
+      "require": "./dist/integrations/express.js"
+    },
+    "./nextjs": {
+      "types": "./dist/integrations/nextjs.d.ts",
+      "import": "./dist/integrations/nextjs.mjs",
+      "require": "./dist/integrations/nextjs.js"
+    },
+    "./fastify": {
+      "types": "./dist/integrations/fastify.d.ts",
+      "import": "./dist/integrations/fastify.mjs",
+      "require": "./dist/integrations/fastify.js"
+    },
+    "./register": {
+      "types": "./dist/loader/register.d.ts",
+      "require": "./dist/loader/register.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "vitest",
     "build": "tsup",
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
-    "example": "tsx --tsconfig examples/express-auto/tsconfig.json -r dotenv/config examples/express-auto/index.ts"
+    "prepublishOnly": "pnpm build",
+    "example": "tsx --tsconfig examples/express-auto/tsconfig.json -r dotenv/config examples/express-auto/index.ts",
+    "example:no-decorators": "tsx --tsconfig examples/express-auto-no-decorators/tsconfig.json -r dotenv/config -r ./src/loader/register.js examples/express-auto-no-decorators/index.ts"
   },
-  "keywords": [],
+  "keywords": [
+    "profiler",
+    "observability",
+    "apm",
+    "tracing",
+    "beetle",
+    "performance"
+  ],
   "author": "Beetle AI <shivang@beetleai.dev>",
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.23.0",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "acorn": "^8.16.0",
+    "acorn-walk": "^8.3.5",
+    "kafkajs": "^2.2.4"
+  },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.2",
@@ -25,13 +77,5 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
-  },
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "kafkajs": "^2.2.4"
   }
 }
