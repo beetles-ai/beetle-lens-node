@@ -1,7 +1,7 @@
 {
-  "name": "beetle-lens-node",
+  "name": "@beetleai_dev/lens-node",
   "version": "1.0.0",
-  "description": "Beetle Lens - Node.js profiling SDK for Express apps",
+  "description": "Production profiler for Node.js Express apps — tracks route latency, DB queries, and HTTP calls. Shows real metrics inline in VS Code via Beetle Lens.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -13,7 +13,20 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "profiler",
+    "performance",
+    "monitoring",
+    "express",
+    "mongoose",
+    "apm",
+    "tracing",
+    "codelens",
+    "vscode",
+    "beetle"
   ],
   "scripts": {
     "build": "tsup",
@@ -22,8 +35,13 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
-  "license": "ISC",
-  "author": "",
+  "license": "MIT",
+  "author": "Beetle AI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/beetles-ai/beetle-lens-node"
+  },
+  "homepage": "https://github.com/beetles-ai/beetle-lens-node#readme",
   "dependencies": {
     "uuid": "^9.0.0"
   },
