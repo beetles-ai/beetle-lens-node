@@ -1,6 +1,6 @@
 {
   "name": "@beetleai_dev/lens-node",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Production profiler for Node.js Express apps — tracks route latency, DB queries, and HTTP calls. Shows real metrics inline in VS Code via Beetle Lens.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
